@@ -182,7 +182,11 @@ cross-build-linux-s390x:
 	+$(MAKE) _build_local GOOS=linux GOARCH=s390x
 .PHONY: cross-build-linux-s390x
 
-cross-build: clean_build_local cross-build-linux-amd64 cross-build-linux-arm64 cross-build-linux-s390x copy_build_local
+cross-build-linux-ppc64le:
+	+$(MAKE) _build_local GOOS=linux GOARCH=ppc64le
+.PHONY: cross-build-linux-ppc64le
+
+cross-build: clean_build_local cross-build-linux-amd64 cross-build-linux-arm64 cross-build-linux-s390x cross-build-linux-ppc64le  copy_build_local
 .PHONY: cross-build
 
 ### toolkit ###

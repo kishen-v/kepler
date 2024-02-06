@@ -8,7 +8,7 @@ script_dir=$(dirname "$(readlink -f "$0")")
 
 registry="quay.io/sustainable_computing_io"
 
-supported_arches=("linux/amd64" "linux/s390x" "linux/arm64")
+supported_arches=("linux/amd64" "linux/s390x" "linux/arm64","linux/ppc64le")
 supported_attacher=("bcc", "libbpf")
 
 function install_packages() {
@@ -33,7 +33,7 @@ function create_builx_builder () {
 
 	docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
 	
-    docker buildx create --name multi-arch --platform "linux/amd64,linux/s390x,linux/arm64" --use
+    docker buildx create --name multi-arch --platform "linux/amd64,linux/s390x,linux/arm64,linux/ppc64le" --use
     docker buildx ls
     docker buildx inspect --bootstrap
 }
@@ -48,6 +48,9 @@ function setup_env_for_arch() {
 			;;
 		"linux/arm64")
 			kernel_arch="arm64"
+			;;
+		"linux/ppc64le")
+			kernel_arch="ppc64le"
 			;;
 		(*) echo "$1 is not supported" && exit 1
 	esac
@@ -103,6 +106,7 @@ function create_image_manifest_base () {
 		${registry}/${image}:latest-amd64-bcc \
 		${registry}/${image}:latest-s390x-bcc \
 		${registry}/${image}:latest-arm64-bcc \
+		${registry}/${image}:latest-ppc64le-bcc \
 		${registry}/${image}:latest-amd64-libbpf
 
 	docker manifest push ${registry}/${image}:latest

@@ -250,6 +250,41 @@ func getS390xArchitecture() (string, error) {
 	return fmt.Sprintf("zSystems model %s", strings.TrimSpace(uarch[1])), err
 }
 
+func getPpc64leArchitecture() (string, error) {
+	// use lscpu to get CPUArchitecture
+	grep := exec.Command("grep", "Model Name:")
+	output := exec.Command("lscpu")
+	pipe, err := output.StdoutPipe()
+	if err != nil {
+		return "", err
+	}
+	defer pipe.Close()
+
+	grep.Stdin = pipe
+	err = output.Start()
+	if err != nil {
+		klog.Errorf("lscpu command start failure: %s", err)
+		return "", err
+	}
+	res, err := grep.Output()
+	if err != nil {
+		klog.Errorf("grep lscpu command output failure: %s", err)
+		return "", err
+	}
+
+	// format the CPUArchitecture result
+	uarch := strings.Split(string(res), ":")
+	if len(uarch) != 2 {
+		return "", fmt.Errorf("lscpu grep output is unexpected")
+	}
+
+	if err = output.Wait(); err != nil {
+		klog.Errorf("lscpu command is not properly completed: %s", err)
+	}
+	model := strings.Split(uarch[1], " ")
+	return fmt.Sprintf("PowerISA used is %s", strings.TrimSpace(model[1])), err
+}
+
 // There are three options for Kepler to detect CPU microarchitecture:
 // 1. Use tools such as 'cpuid', 'archspec', etc, to directly fetch CPU microarchitecture.
 //
@@ -334,6 +369,8 @@ func getCPUArchitecture() (string, error) {
 		myCPUArch, err = getX86Architecture()
 	} else if runtime.GOARCH == "s390x" {
 		return getS390xArchitecture()
+	} else if runtime.GOARCH == "ppc64le" {
+		return getPpc64leArchitecture()
 	} else {
 		myCPUArch, err = getArm64Architecture()
 	}
